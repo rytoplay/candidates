@@ -1,0 +1,115 @@
+<html>
+    <head>
+        <style>
+        body {margin: 10px !important}
+        </style>
+            <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">    </head>
+<body>
+<h1>Candidate Word Counter</h1>
+<h4>Paste raw text here</h4>
+<table><tr>
+    <td>
+<textarea id="rawtext" name="rawtext" cols=80 rows=20 >
+
+
+</textarea><br>
+<input type=button value="Count" id="count_button">
+</td><td>
+<div id="results" class="col-sm">Results</div>
+</td><td>
+
+<div id="chart_div" class="col-sm"></div>
+</td></tr></table>
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"></script>
+<script>
+const candidates = [
+    'Bennet',
+    'Joe Biden',
+    'Cory Booker',
+    'Bullock',
+    'Pete Buttigieg',
+    'Julian Castro',
+    'deBlasio',
+    'Delaney',
+    'Tulsi Gabbard',
+    'Kirsten Gillibrand',
+    'Kamala Harris',
+    'Hickenlooper',
+    'Inslee',
+    'Amy Klobuchar',
+    'Seth Moulton',
+    'Beto rourk Orourke O\'Rourke',
+    'Ryan',
+    'Bernie Sanders',
+    'Swalwell',
+    'Elizabeth Liz Warren',
+    'Marianne Williamson',
+    'Yang',
+];
+
+$(function() {
+    $('#count_button').click(function() {
+        let docfile = $('#rawtext').val();
+        let doc = docfile.split(/(<span.*?>)|[\r\n]+/);
+        let candidate_hash = [];
+        let gchart_data = [];
+        let keys = [];
+        for (fullname of candidates) {
+            let names = fullname.split(/\s+/);
+            let key   = names[names.length-1];
+            candidate_hash[key] = 0;
+            keys.push(key);
+            if (typeof key === "undefined" || !key.length) {continue}
+            for (row of doc) {
+                if (typeof row === "undefined" || !row.length) {continue}
+                let count = 0;
+                for (name of names) {
+                    let re = RegExp('\\b'+name+'\\b','i');
+                    if (row.match(re)) {count = 1};
+                }
+                if (count) {candidate_hash[key]++};
+            }
+        }
+        drawChart(candidate_hash, keys);
+
+        sorted=keys.sort((a,b) => {return (candidate_hash[a] < candidate_hash[b])?1:-1});
+        let c='';
+        for (k of keys) {
+            c+=k+': '+candidate_hash[k]+'<br>\n';
+            $('#results').html(c);
+        }
+    });
+
+    // Load the Visualization API and the corechart package.
+    google.charts.load('current', {'packages':['corechart']});
+
+    // Set a callback to run when the Google Visualization API is loaded.
+    //google.charts.setOnLoadCallback(drawChart);
+
+    // Callback that creates and populates a data table,
+    // instantiates the pie chart, passes in the data and
+    // draws it.
+    function drawChart(candidate_hash, keys) {
+
+        // Create the data table.
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'Candidate');
+        data.addColumn('number', 'Votes');
+        sorted=keys.sort((a,b) => {return (candidate_hash[a] < candidate_hash[b])?1:-1});
+        for (k of sorted) {
+            data.addRows(
+                [[k, candidate_hash[k]]]
+            );
+        }
+        let options = {title: 'FB Votes by frequency in posts',
+        width: 800,
+        height: 800};
+        var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+    }
+
+})
+</script>
+
+</body></html>
